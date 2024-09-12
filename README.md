@@ -6,5 +6,5 @@ A new Flutter project.
 
 This project is a starting point for a Flutter application.
 
-# App I Action
+# App In Action
 ![UI](GIF/ToDoApp.gif)
