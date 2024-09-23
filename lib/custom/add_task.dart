@@ -11,47 +11,40 @@ class AddTaskBottomSheet extends StatefulWidget {
 }
 
 class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
-  final List<TaskItem> _items = [];
+  final List<TaskItem> _items = []; // List to hold task items
   TimeOfDay? _selectedTime;
   final TextEditingController _taskDescriptionController = TextEditingController();
+  final TextEditingController _taskItemController = TextEditingController(); 
+
 
   Future<void> _pickTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+    final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            alwaysUse24HourFormat: false,
-          ),
-          child: child!,
-        );
-      },
     );
-    if (picked != null && picked != _selectedTime) {
+    if (picked != null) {
       setState(() {
         _selectedTime = picked;
       });
     }
   }
 
+  // Add task item to the list
   void _addTaskItem() {
-    final String taskDescription = _taskDescriptionController.text;
-    if (taskDescription.isNotEmpty) {
+    final itemDescription = _taskItemController.text;
+    if (itemDescription.isNotEmpty) {
       setState(() {
-        _items.add(TaskItem(text: taskDescription));
-        _taskDescriptionController.clear();
+        _items.add(TaskItem(text: itemDescription)); // Add item to the list
+        _taskItemController.clear(); // Clear the input field after adding
       });
     }
   }
 
+  // Add the task with all task items
   void _addTask() {
     if (_selectedTime != null && _items.isNotEmpty) {
       widget.onTaskAdded(
-        Task(
-          time: _selectedTime!.format(context),
-          items: _items,
-        ),
+        Task(time: _selectedTime!.format(context), items: _items),
       );
       Navigator.pop(context);
     }
@@ -59,65 +52,55 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton(
-                onPressed: () => _pickTime(context),
-                child: Text(
-                  _selectedTime == null
-                      ? 'Select Time'
-                      : 'Selected Time: ${_selectedTime!.format(context)}',
-                ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // To prevent excessive height
+        children: [
+          // Button to pick time
+          ElevatedButton(
+            onPressed: () => _pickTime(context),
+            child: Text(_selectedTime == null ? 'Select Time' : 'Selected Time: ${_selectedTime!.format(context)}'),
+          ),
+          
+          // Input field for the task item description
+          TextField(
+            controller: _taskItemController,
+            decoration: InputDecoration(
+              labelText: 'Task Item',
+              suffixIcon: IconButton(
+                icon: Icon(Icons.add),
+                onPressed: _addTaskItem, // Add the task item on click
               ),
-              SizedBox(height: 14),
-              TextField(
-                controller: _taskDescriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Task Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: _addTaskItem,
-                child: Text('+' , style: TextStyle(fontSize: 17),),
-              ),
-              SizedBox(height: 14),
-              if (_items.isNotEmpty) ...[
-                SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: _items.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(_items[index].text),
-                      tileColor: Colors.grey[200],
-                      contentPadding: EdgeInsets.all(8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.blueAccent),
-                      ),
-                    );
+            ),
+          ),
+
+          // Displaying the list of added task items
+          ListView.builder(
+            shrinkWrap: true, // Ensures the list doesn't take too much space
+            itemCount: _items.length,
+            itemBuilder: (context, index) {
+              final item = _items[index];
+              return ListTile(
+                title: Text(item.text),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _items.removeAt(index); // Remove item from the list
+                    });
                   },
                 ),
-              ],
-              SizedBox(height: 14),
-              ElevatedButton(
-                onPressed: _addTask,
-                child: Text('Add Task'),
-              ),
-            ],
+              );
+            },
           ),
-        ),
+
+          // Button to add the task
+          ElevatedButton(
+            onPressed: _addTask,
+            child: Text('Add Task'),
+          ),
+        ],
       ),
     );
   }
